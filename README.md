@@ -20,7 +20,8 @@ frames/orbit/           180 frames — 360° orbit of the code monolith
 frames/dive/            180 frames — fly-through of the server hall
 dist/                   build output, git-ignored (what pm2 + nginx serve)
 deploy/deploy.sh        pull + hard-reset + install + build + pm2 reload
-deploy/nginx/           nginx site config
+deploy/install-nginx.sh one-shot nginx install/repair + verification
+deploy/nginx/           nginx site config (pure reverse proxy)
 clips/, img/            source media (git-ignored, see "Source media")
 ```
 
@@ -62,19 +63,39 @@ npm run pm2:start                  # npm ci + build + pm2 start + pm2 save
 pm2 startup                        # print the systemd hook, run what it says
 ```
 
-nginx:
+nginx — one command, from inside the checkout:
 
 ```bash
-sudo cp deploy/nginx/nullshell.conf /etc/nginx/sites-available/nullshell
-sudo sed -i 's#APP_ROOT#/var/www/nullshell#g; s#nullshell.example.com#your-domain.com#g' \
-  /etc/nginx/sites-available/nullshell
-sudo ln -s /etc/nginx/sites-available/nullshell /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+sudo bash deploy/install-nginx.sh your-domain.com
 sudo certbot --nginx -d your-domain.com
 ```
 
-nginx serves `/frames/` straight off disk (35 MB across 360 files) and proxies
-everything else to the pm2 process.
+The installer checks the app is healthy on 3099 first, backs up any existing config,
+writes and enables the site, tests, reloads (rolling back if the test fails), then
+curls every asset through nginx and reports pass/fail per path.
+
+**nginx is a pure reverse proxy** — no `root`, no `alias`, no filesystem paths and no
+directory permissions involved. The pm2 process serves HTML, CSS, JS and all 360
+frames with the right cache headers (`no-cache` on HTML, 7d on assets, 1y immutable on
+frames) and gzips text itself. This is deliberate: path/permission mistakes in nginx
+were previously turning into hard 404s on the styling and frames.
+
+An optional off-disk fast path for `/frames/` is documented at the bottom of
+`deploy/nginx/nullshell.conf`. Only add it once the proxy is confirmed working, and
+keep its `try_files … @app` fallback.
+
+### If an asset 404s
+
+```bash
+curl -sI https://your-domain.com/styles.css | grep -i -e '^HTTP' -e x-served-by
+```
+
+- `X-Served-By: node-dist` → the app answered; a 404 here is a real missing file
+  (run `npm run build`).
+- `X-Served-By: node-source` → running unbuilt; run `npm run build` and reload pm2.
+- **no `X-Served-By` header at all** → nginx answered without reaching the app, so the
+  running config is not this one. Re-run the installer, then
+  `sudo tail -30 /var/log/nginx/nullshell.error.log`.
 
 ## Updating
 

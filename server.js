@@ -58,6 +58,12 @@ app.use(
 
 app.use(morgan(PROD ? "combined" : "dev"));
 
+// makes it obvious from `curl -sI` which layer answered a request
+app.use((_req, res, next) => {
+  res.setHeader("X-Served-By", SERVE_BUILT ? "node-dist" : "node-source");
+  next();
+});
+
 // The frame sequences are content-final once generated — cache them hard.
 app.use(
   "/frames",
