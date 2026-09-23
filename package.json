@@ -1,0 +1,19 @@
+{
+  "name": "nullshell",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NULLSHELL — scroll-scrubbed cinematic landing page (dark terminal-green theme)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "PORT=8099 HOST=0.0.0.0 node server.js",
+    "deploy": "bash deploy/deploy.sh",
+    "pm2:start": "pm2 start ecosystem.config.js && pm2 save",
+    "pm2:reload": "pm2 reload ecosystem.config.js --update-env",
+    "pm2:logs": "pm2 logs nullshell"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}

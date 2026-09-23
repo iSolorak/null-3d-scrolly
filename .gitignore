@@ -1,0 +1,19 @@
+# --- dependencies / runtime ---
+node_modules/
+logs/
+*.log
+.pm2/
+
+# --- source media (regenerate-able, heavy) ---
+# clips/ holds the raw Higgsfield renders (~29 MB) and img/ the hero keyframe.
+# The site only needs frames/, which IS committed. Keep local backups of these
+# two — the CloudFront source URLs in README.md are not guaranteed forever.
+clips/
+img/
+
+# --- os / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

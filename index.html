@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NULLSHELL — Own the stack. From the shell up.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fixed HUD chrome -->
+  <nav class="hud">
+    <span class="hud-brand">NULL<span class="slash">/</span>SHELL</span>
+    <span class="hud-mid"><i class="blink"></i>daemon · online</span>
+    <span class="hud-right">v4.2.0 · root@localhost</span>
+  </nav>
+
+  <!-- ============ SCRUB 1 — 360° orbit of the code monolith ============ -->
+  <section class="cinematic" id="hero">
+    <div class="sticky">
+      <canvas></canvas>
+      <div class="grid-overlay"></div>
+      <div class="vignette"></div>
+
+      <div class="overlay">
+        <h1 class="reveal-line" data-in="0.00" data-out="0.30">
+          <span class="kw">COMPILE</span> THE DARK<span class="caret"></span>
+          <small>nullshell · terminal-native runtime</small>
+        </h1>
+        <h1 class="reveal-line" data-in="0.34" data-out="0.66">
+          YOUR STACK.<br />ZERO <span class="kw">ABSTRACTION</span>.
+          <small>no dashboards · no magic · just the shell</small>
+        </h1>
+        <h1 class="reveal-line" data-in="0.70" data-out="1.00">
+          <span class="cmt">//</span> <span class="kw">ROOT ACCESS</span>, RESTORED.
+          <small>ship from the prompt you already live in</small>
+        </h1>
+      </div>
+
+      <div class="telemetry tl">UPTIME <b>99.997%</b></div>
+      <div class="telemetry tr">TLS · AES-256 · OK</div>
+      <div class="telemetry bl" id="frame-readout">FRAME 000 / 000</div>
+      <div class="telemetry br">LATENCY <b>7ms</b></div>
+
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="scroll-hint" id="scroll-hint">SCROLL ▾</div>
+    </div>
+  </section>
+
+  <!-- ============ Manifesto + features ============ -->
+  <section class="panel">
+    <p class="eyebrow reveal">whoami</p>
+    <h2 class="section-title reveal">A runtime built for people who <span class="kw">read the source</span>.</h2>
+    <p class="lede reveal">
+      NULLSHELL is a terminal-native build and deploy runtime. No click-through consoles, no YAML
+      archaeology, no vendor lock behind a login wall. One binary, one config, one prompt — the
+      whole pipeline addressable from the shell you already have open.
+    </p>
+
+    <div class="grid">
+      <div class="card reveal">
+        <span class="idx">01 / EXEC</span>
+        <h3>Deterministic builds</h3>
+        <p>Content-addressed layers, hermetic toolchains. The same hash builds the same artifact on your laptop and in CI — forever.</p>
+      </div>
+      <div class="card reveal">
+        <span class="idx">02 / NET</span>
+        <h3>Edge by default</h3>
+        <p>Every deploy lands on 240+ POPs. Cold start under 12ms, no region picker, no warm-up cron hacks.</p>
+      </div>
+      <div class="card reveal">
+        <span class="idx">03 / SEC</span>
+        <h3>Zero-trust secrets</h3>
+        <p>Secrets are sealed to the build identity, decrypted in-process, never written to disk, never echoed to a log line.</p>
+      </div>
+      <div class="card reveal">
+        <span class="idx">04 / OBS</span>
+        <h3>Logs that grep</h3>
+        <p>Structured streams piped straight to stdout. Your existing awk, jq, and ripgrep muscle memory still works.</p>
+      </div>
+    </div>
+
+    <div class="terminal reveal">
+      <div class="terminal-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span>~/src/nullshell — zsh</span>
+      </div>
+<pre><span class="p">$</span> nsh init --runtime edge
+<span class="c">  ✓ toolchain pinned      rustc 1.84 · node 22.6 · deno 2.1</span>
+<span class="c">  ✓ lockfile hashed       sha256:9f3c…a17b</span>
+
+<span class="p">$</span> nsh deploy --prod
+<span class="c">  → building</span>          <span class="o">hermetic · 4 layers cached</span>
+<span class="c">  → sealing secrets</span>   <span class="o">12 keys · aes-256-gcm</span>
+<span class="c">  → pushing edge</span>      <span class="o">241/241 pops · 7.1s</span>
+
+  <span class="o">live</span>  https://nullshell.sh   <span class="c">(green, 0 rollbacks)</span>
+<span class="p">$</span> <span class="caret"></span></pre>
+    </div>
+  </section>
+
+  <!-- ============ SCRUB 2 — fly-through the server hall ============ -->
+  <section class="cinematic short" id="deep">
+    <div class="sticky">
+      <canvas></canvas>
+      <div class="grid-overlay"></div>
+      <div class="vignette"></div>
+
+      <div class="overlay">
+        <h1 class="reveal-line" data-in="0.02" data-out="0.46">
+          DOWN TO THE <span class="kw">METAL</span>.
+          <small>bare-metal fleet · no noisy neighbours</small>
+        </h1>
+        <h1 class="reveal-line" data-in="0.52" data-out="1.00">
+          <span class="kw">SUDO</span> YOUR INFRASTRUCTURE.
+          <small>every layer inspectable, every byte yours</small>
+        </h1>
+      </div>
+
+      <div class="telemetry tl">FLEET <b>1,248 NODES</b></div>
+      <div class="telemetry tr">THERMAL NOMINAL</div>
+      <div class="telemetry br">IO 42.8 GB/s</div>
+    </div>
+  </section>
+
+  <!-- ============ Stats ============ -->
+  <section class="panel">
+    <p class="eyebrow reveal">uptime --stats</p>
+    <h2 class="section-title reveal">Numbers from the <span class="kw">last 90 days</span>.</h2>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-num" data-count="7.1" data-suffix="s">0</span><span class="stat-label">median cold deploy</span></div>
+      <div class="stat"><span class="stat-num" data-count="241" data-suffix="">0</span><span class="stat-label">edge locations</span></div>
+      <div class="stat"><span class="stat-num" data-count="99.9" data-suffix="%">0</span><span class="stat-label">build reproducibility</span></div>
+      <div class="stat"><span class="stat-num" data-count="0" data-suffix="">0</span><span class="stat-label">dashboards required</span></div>
+    </div>
+  </section>
+
+  <!-- ============ CTA ============ -->
+  <section class="cta">
+    <h2><span class="kw">$</span> curl -fsSL nullshell.sh | sh</h2>
+    <p>One binary. No account wall, no telemetry beacon, no trial timer. Pipe it, read it first if you
+       want — the installer is 180 lines and it is on the record.</p>
+    <a class="btn" href="#hero">Read the source</a>
+  </section>
+
+  <footer>NULLSHELL · built with a scroll-scrubbed canvas frame sequence · visuals generated with Higgsfield</footer>
+
+  <!-- Lenis smooth scroll -->
+  <script src="https://unpkg.com/lenis@1.3.21/dist/lenis.min.js"></script>
+  <script>
+    const ORBIT_FRAMES = 180;
+    const DIVE_FRAMES  = 180;
+    window.SCRUB_SECTIONS = [
+      {
+        section: "#hero",
+        frameCount: ORBIT_FRAMES,
+        bg: "#010503",
+        framePath: (i) => `frames/orbit/frame_${String(i).padStart(4, "0")}.jpg`
+      },
+      {
+        section: "#deep",
+        frameCount: DIVE_FRAMES,
+        bg: "#010503",
+        framePath: (i) => `frames/dive/frame_${String(i).padStart(4, "0")}.jpg`
+      }
+    ];
+  </script>
+  <script src="scroll-cinematic.js"></script>
+  <script>
+    // HUD progress bar + frame readout, driven off the hero section
+    (function () {
+      const hero = document.querySelector("#hero");
+      const fill = document.querySelector("#progress-fill");
+      const readout = document.querySelector("#frame-readout");
+      if (!hero || !fill) return;
+      const total = ORBIT_FRAMES;
+      function tick() {
+        const rect = hero.getBoundingClientRect();
+        const p = Math.min(Math.max(-rect.top / (rect.height - window.innerHeight), 0), 1);
+        fill.style.width = (p * 100).toFixed(2) + "%";
+        if (readout) {
+          const f = Math.min(total, Math.max(1, Math.round(p * total)));
+          readout.textContent = `FRAME ${String(f).padStart(3, "0")} / ${total}`;
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
