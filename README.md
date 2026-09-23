@@ -20,8 +20,7 @@ frames/orbit/           180 frames — 360° orbit of the code monolith
 frames/dive/            180 frames — fly-through of the server hall
 dist/                   build output, git-ignored (what pm2 + nginx serve)
 deploy/deploy.sh        pull + hard-reset + install + build + pm2 reload
-deploy/install-nginx.sh one-shot nginx install/repair + verification
-deploy/nginx/           nginx site config (pure reverse proxy)
+deploy/nginx/           nginx site config (:80 redirect + :443 proxy)
 clips/, img/            source media (git-ignored, see "Source media")
 ```
 
@@ -63,26 +62,26 @@ npm run pm2:start                  # npm ci + build + pm2 start + pm2 save
 pm2 startup                        # print the systemd hook, run what it says
 ```
 
-nginx — one command, from inside the checkout:
+nginx:
 
 ```bash
-sudo bash deploy/install-nginx.sh your-domain.com
-sudo certbot --nginx -d your-domain.com
+sudo cp deploy/nginx/nullshell.solorak.xyz.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/nullshell.solorak.xyz.conf \
+           /etc/nginx/sites-enabled/
+sudo certbot --nginx -d nullshell.solorak.xyz
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-The installer checks the app is healthy on 3099 first, backs up any existing config,
-writes and enables the site, tests, reloads (rolling back if the test fails), then
-curls every asset through nginx and reports pass/fail per path.
+Two server blocks: `:80` redirects everything to HTTPS (keeping the ACME challenge
+path reachable), `:443` proxies to `127.0.0.1:3099`.
 
-**nginx is a pure reverse proxy** — no `root`, no `alias`, no filesystem paths and no
-directory permissions involved. The pm2 process serves HTML, CSS, JS and all 360
-frames with the right cache headers (`no-cache` on HTML, 7d on assets, 1y immutable on
-frames) and gzips text itself. This is deliberate: path/permission mistakes in nginx
-were previously turning into hard 404s on the styling and frames.
-
-An optional off-disk fast path for `/frames/` is documented at the bottom of
-`deploy/nginx/nullshell.conf`. Only add it once the proxy is confirmed working, and
-keep its `try_files … @app` fallback.
+**nginx never reads the filesystem** — no `root`, no `alias`, no paths or directory
+permissions to get wrong. The app serves HTML, CSS, JS and all 360 frames out of
+`dist/` with its own cache headers (`no-cache` on HTML, 7d on assets, 1y immutable on
+frames), gzips text via `compression`, and sets the security headers via `helmet`, so
+nginx sets `gzip off` and adds no headers of its own. Earlier versions of this config
+tried to serve the assets off disk and 404'd the styling and frames when the path was
+wrong; this cannot fail that way.
 
 ### If an asset 404s
 
@@ -94,8 +93,9 @@ curl -sI https://your-domain.com/styles.css | grep -i -e '^HTTP' -e x-served-by
   (run `npm run build`).
 - `X-Served-By: node-source` → running unbuilt; run `npm run build` and reload pm2.
 - **no `X-Served-By` header at all** → nginx answered without reaching the app, so the
-  running config is not this one. Re-run the installer, then
-  `sudo tail -30 /var/log/nginx/nullshell.error.log`.
+  running config is not this one. Re-install it (and re-run certbot, which is what
+  writes the `:443` block that actually serves your traffic), then check
+  `sudo tail -30 /var/log/nginx/error.log`.
 
 ## Updating
 
