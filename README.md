@@ -13,20 +13,43 @@ copy does the rest. Plain HTML/CSS/JS, no build step.
 index.html              markup + SCRUB_SECTIONS config (bottom of the file)
 styles.css              theme: phosphor green on near-black, CRT scanlines
 scroll-cinematic.js     the scrub engine (preload, draw, reveal, counters)
-server.js               zero-dependency static server (pm2 entrypoint)
+build.js                build step — minifies + emits dist/
+server.js               Express static server (pm2 entrypoint)
 ecosystem.config.js     pm2 process definition — 127.0.0.1:3099
 frames/orbit/           180 frames — 360° orbit of the code monolith
 frames/dive/            180 frames — fly-through of the server hall
-deploy/deploy.sh        pull + hard-reset + pm2 reload
+dist/                   build output, git-ignored (what pm2 + nginx serve)
+deploy/deploy.sh        pull + hard-reset + install + build + pm2 reload
 deploy/nginx/           nginx site config
 clips/, img/            source media (git-ignored, see "Source media")
 ```
 
+## Dependencies
+
+Runtime: `express`, `compression`, `helmet`, `morgan`.
+Build-time: `esbuild`, `html-minifier-terser` (devDependencies — pruned on the VPS
+after the build runs).
+
 ## Local
 
 ```bash
-npm run dev        # http://localhost:8099, binds 0.0.0.0
+npm install
+npm run dev        # http://localhost:8099, binds 0.0.0.0, serves raw sources
 ```
+
+`server.js` serves `dist/` when it exists and falls back to the source tree when it
+doesn't, so `dev` needs no build. `GET /healthz` returns the mode, git rev, asset
+hashes and frame count.
+
+## Build
+
+```bash
+npm run build      # → dist/
+```
+
+Minifies CSS/JS with esbuild and HTML with html-minifier-terser, rewrites the asset
+URLs to `?v=<content-hash>` for cache-busting, **hardlinks** `frames/` into
+`dist/frames/` (no 35 MB duplicate on disk), and writes `dist/build.json`.
 
 ## VPS deploy
 
@@ -35,7 +58,7 @@ Node 18+, pm2, and nginx on the box. First time:
 ```bash
 git clone <your-remote> /var/www/nullshell
 cd /var/www/nullshell
-npm run pm2:start                  # starts on 127.0.0.1:3099, pm2 save
+npm run pm2:start                  # npm ci + build + pm2 start + pm2 save
 pm2 startup                        # print the systemd hook, run what it says
 ```
 
@@ -56,13 +79,18 @@ everything else to the pm2 process.
 ## Updating
 
 ```bash
-npm run deploy            # fetch, reset --hard to origin/<branch>, pm2 reload, health check
+npm run deploy            # full cycle
 BRANCH=main npm run deploy
 ```
 
-`deploy` hard-resets the checkout — **uncommitted changes on the VPS are discarded**.
-Treat the server as a mirror of the remote, not an editing surface. `logs/`, `clips/`
-and `img/` survive the clean.
+`deploy` runs: `git fetch` → `git reset --hard origin/<branch>` → `git clean` →
+`npm ci` (full tree, the build needs devDeps) → `npm run build` →
+`npm prune --omit=dev` → `pm2 reload` (or `start`) → `pm2 save` → `GET /healthz`
+check, exiting non-zero if it isn't 200.
+
+It hard-resets the checkout — **uncommitted changes on the VPS are discarded**.
+Treat the server as a mirror of the remote, not an editing surface. `logs/`, `clips/`,
+`img/`, `node_modules/` and `dist/` survive the clean.
 
 Other helpers: `npm run pm2:reload`, `npm run pm2:logs`.
 

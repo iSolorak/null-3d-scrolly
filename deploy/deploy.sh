@@ -24,15 +24,27 @@ OLD_REV="$(git rev-parse --short HEAD)"
 
 git fetch --prune "$REMOTE" "$BRANCH"
 git reset --hard "${REMOTE}/${BRANCH}"
-git clean -fd -e logs -e clips -e img   # drop strays, keep local media + logs
+# drop strays, but keep the things a deploy legitimately owns:
+# node_modules (reinstalled below), dist (rebuilt below), logs, local media
+git clean -fd -e logs -e clips -e img -e node_modules -e dist
 
 NEW_REV="$(git rev-parse --short HEAD)"
 echo "→ ${OLD_REV} .. ${NEW_REV}"
 
-# zero-dependency server, but install if a package-lock ever appears
+# install everything (the build needs devDependencies), build, then prune the
+# dev tree back out so pm2 runs on production deps only
+echo "→ installing dependencies"
 if [ -f package-lock.json ]; then
-  npm ci --omit=dev
+  npm ci
+else
+  npm install
 fi
+
+echo "→ building dist/"
+npm run build
+
+echo "→ pruning dev dependencies"
+npm prune --omit=dev
 
 mkdir -p logs
 
@@ -48,9 +60,10 @@ pm2 save
 
 # smoke test the port pm2 is actually serving on
 PORT="${PORT:-3099}"
-sleep 1
-CODE="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT}/" || echo 000)"
+sleep 2
+CODE="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${PORT}/healthz" || echo 000)"
 if [ "$CODE" = "200" ]; then
+  curl -s "http://127.0.0.1:${PORT}/healthz"; echo
   echo "✓ ${APP_NAME} healthy on 127.0.0.1:${PORT} @ ${NEW_REV}"
 else
   echo "✗ health check failed (HTTP ${CODE}) — check: pm2 logs ${APP_NAME}"
